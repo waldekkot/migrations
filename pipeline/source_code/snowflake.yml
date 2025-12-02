@@ -1,0 +1,12 @@
+definition_version: 2
+entities:
+  REPORTING_NOTEBOOK:
+    type: notebook
+    query_warehouse: COMPUTE_WH
+    notebook_file: "Basic Reporting Notebook - Snowflake.ipynb"
+    runtime_environment_version: "WH-RUNTIME-2.0"
+    artifacts:
+      - "Basic Reporting Notebook - Snowflake.ipynb"
+      - environment.yml
+      - spark_configs.txt
+      - sql_server_credentials.txt
