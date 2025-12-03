@@ -1,0 +1,137 @@
+{
+    "name": "demotest2",
+    "guid": "b11fd27f-4ae6-4a56-b39e-a11b8ba6a347",
+    "inputPath": "/Users/wkot/projects/quickstarts/migrations/pipeline-snowpark/source_code",
+    "outputPath": "/Users/wkot/projects/quickstarts/migrations/pipeline-snowpark/converted",
+    "platform": "SnowConvertPython",
+    "accesscode": "26e2eba5-7da6-4819-aee5-f7b978611e36",
+    "isDemo": false,
+    "steps": [
+        {
+            "name": "Project Creation",
+            "status": 1,
+            "active": false,
+            "disabled": false,
+            "steps": []
+        },
+        {
+            "name": "Assessment",
+            "status": 1,
+            "active": false,
+            "disabled": false,
+            "steps": [
+                {
+                    "name": "Execution",
+                    "status": 1,
+                    "disabled": false,
+                    "active": false,
+                    "expandOptions": {
+                        "isExpandable": true,
+                        "expand": true
+                    }
+                },
+                {
+                    "name": "Results",
+                    "status": 1,
+                    "disabled": false,
+                    "active": false,
+                    "expandOptions": {
+                        "isExpandable": true,
+                        "expand": true
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Conversion",
+            "status": 0,
+            "active": true,
+            "disabled": false,
+            "steps": [
+                {
+                    "name": "Conversion SetUp",
+                    "status": 1,
+                    "disabled": false,
+                    "active": false
+                },
+                {
+                    "name": "Execution",
+                    "status": 0,
+                    "disabled": false,
+                    "active": true,
+                    "expandOptions": {
+                        "isExpandable": true,
+                        "expand": true
+                    }
+                },
+                {
+                    "name": "Results",
+                    "status": 0,
+                    "disabled": true,
+                    "active": false
+                }
+            ]
+        },
+        {
+            "name": "Post-Conversion",
+            "status": 0,
+            "active": false,
+            "disabled": true,
+            "steps": []
+        }
+    ],
+    "conversionSettings": null,
+    "internalProcessInputPath": "",
+    "internalAssessmentOutputPath": "/Users/wkot/projects/quickstarts/migrations/pipeline-snowpark/converted/Assessment-12-3-2025T8 44",
+    "internalConversionOutputPath": "/Users/wkot/projects/quickstarts/migrations/pipeline-snowpark/converted/Conversion-12-3-2025T8 45",
+    "customerData": {
+        "company": "Snowflake",
+        "email": "waldemar.kot@snowflake.com"
+    },
+    "conversionProgress": {
+        "isSuccessful": true
+    },
+    "assessmentProgress": {
+        "isSuccessful": true
+    },
+    "customInputPaths": {
+        "assessment": "",
+        "conversion": ""
+    },
+    "sqlFlavor": "Databricks",
+    "isPandasEnabled": false,
+    "isJupyterConversionEnabled": true,
+    "isSmaCheckpointsEnabled": true,
+    "checkpointsAsActive": true,
+    "checkpointsCollectUDFs": false,
+    "checkpointsMode": "Schema",
+    "checkpointsSample": "100%",
+    "checkpointsRelevantCreationFunctions": [
+        "pyspark.rdd.RDD.toDF",
+        "pyspark.sql.readwriter.DataFrameReader.csv",
+        "pyspark.sql.readwriter.DataFrameReader.jdbc",
+        "pyspark.sql.readwriter.DataFrameReader.json",
+        "pyspark.sql.readwriter.DataFrameReader.load",
+        "pyspark.sql.readwriter.DataFrameReader.orc",
+        "pyspark.sql.readwriter.DataFrameReader.parquet",
+        "pyspark.sql.readwriter.DataFrameReader.table",
+        "pyspark.sql.readwriter.DataFrameReader.text",
+        "pyspark.sql.session.SparkSession.createDataFrame"
+    ],
+    "checkpointsRelevantTransformationFunctions": [
+        "pyspark.sql.dataframe.DataFrame.intersect",
+        "pyspark.sql.dataframe.DataFrame.join",
+        "pyspark.sql.dataframe.DataFrame.union",
+        "pyspark.sql.group.GroupedData.pivot"
+    ],
+    "checkpointsRelevantUserFunctions": [],
+    "lastViewState": {
+        "currentStep": {
+            "stepIndex": 2,
+            "subStepIndex": 1
+        },
+        "currentResultTab": "results",
+        "showConversionTabs": true,
+        "lastViewedAt": "2025-12-03T07:45:10.937Z"
+    }
+}

@@ -262,6 +262,7 @@ Here we start with Snowpark Connect for Apache Spark
   d. ./run_pipeline_notebook.sh
 
 
+
 -----------------------------------------------------------------------------------------------------------------------
 C. Here we demonstrate with Spark to Snowpark code conversion 
 1. using SMA (Snowpark Migration Accelerator)
