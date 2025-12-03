@@ -1,51 +1,82 @@
-This is a demo script for the Snoflake Virtual Hands-on: https://www.snowflake.com/en/webinars/virtual-hands-on-lab/migrate-with-confidence-snowflakes-comprehensive-toolkit-for-faster-smarter-data-and-pipeline-migrations-2025-12-03/
+# Snowflake Migration Toolkit Demo
+
+> Demo script for the [Snowflake Virtual Hands-on Lab: Migrate with Confidence](https://www.snowflake.com/en/webinars/virtual-hands-on-lab/migrate-with-confidence-snowflakes-comprehensive-toolkit-for-faster-smarter-data-and-pipeline-migrations-2025-12-03/)
+
+## Overview
 
 The demo consists of 3 parts:
-1. setup of the demo environment
-2. migration of database objects and data (from the source database to Snowflaake)
-3. migration of example Spark-based data engineering pipeline
 
-The migrations are performed with high-levels of automation, using Snowflake toolkit:
-1. SnowConvert AI (converting data sources to Snowflake, optionally also: data migration, data validation)
-2. Snowpark Migration Accelerator (Spark data pipelines conversion to Snowflake Snowpark)
+1. **Setup** of the demo environment
+2. **Database Migration** — migrating database objects and data from the source database to Snowflake
+3. **Pipeline Migration** — migrating an example Spark-based data engineering pipeline
 
-Note: Snowflake also allows running Spark code directly (i.e. without conversion to Snowpark) using: Snowpark Connect for Apache Spark functionality
+### Migration Tools
 
-Important links:
-1. docs.snowflake.com
-2. quickstarts.snowflake.com
+The migrations are performed with high levels of automation using the Snowflake toolkit:
 
-0. PREREQUISITES
-  - Docker (or other Linux containers client)
-    - optional: Docker Desktop (if you like/need a UI)
-  - VS Code
-    - with SQL Server extension
-    - with Snowflake extension
-  - Snowflake CLI (https://docs.snowflake.com/en/developer-guide/snowflake-cli/index)
-  - SnowConvert AI (https://docs.snowflake.com/en/migrations/snowconvert-docs/overview)
-  - Snowpark Migration Accelerator (https://docs.snowflake.com/en/migrations/sma-docs/README)
-  - trial Snowflake account (https://trial.snowflake.com/)
-    - any cloud provider (preferred: AWS)
-    - any region (preferred: European)
-    - Enterprise Edition is sufficient
+| Tool | Purpose |
+|------|---------|
+| **SnowConvert AI** | Converting data sources to Snowflake, optionally also: data migration, data validation |
+| **Snowpark Migration Accelerator** | Spark data pipelines conversion to Snowflake Snowpark |
 
+> **Note:** Snowflake also allows running Spark code directly (without conversion to Snowpark) using **Snowpark Connect for Apache Spark**.
 
-1. start with cloning the provided git repo on GitHub
-  1. example: cd ~/projects/quickstarts
-  2. git clone https://github.com/waldekkot/migrations
-  3. cd migrations
+### Important Links
 
+- [Snowflake Documentation](https://docs.snowflake.com)
+- [Snowflake Quickstarts](https://quickstarts.snowflake.com)
 
------------------------------------------------------------------------------------------------------------------------
-A. ENVIRONMENT SETUP
+---
 
-1. run:   . ./setenv.sh
-  - this sets up some basic environment variables (like under what user/password the SQL Server in Docker will run)
-    - default SQL Server username/password: sa / VHOL12345!demo
+## Prerequisites
 
-2. run local Docker container with SQL Server
+### Required Software
 
-# SQL Server 2017
+- **Docker** (or other Linux containers client)
+  - *Optional:* Docker Desktop (if you prefer a UI)
+- **VS Code** with extensions:
+  - SQL Server
+  - Snowflake
+  - Python
+  - Docker *(optional)*
+- **[Snowflake CLI](https://docs.snowflake.com/en/developer-guide/snowflake-cli/index)**
+- **[SnowConvert AI](https://docs.snowflake.com/en/migrations/snowconvert-docs/overview)**
+- **[Snowpark Migration Accelerator](https://docs.snowflake.com/en/migrations/sma-docs/README)**
+
+### Snowflake Account
+
+- [Trial Snowflake account](https://trial.snowflake.com/)
+  - Any cloud provider (preferred: **AWS**)
+  - Any region (preferred: **European**)
+  - **Enterprise Edition** is sufficient
+
+---
+
+## Part A: Environment Setup
+
+### 1. Clone the Repository
+
+```bash
+cd ~/projects/quickstarts
+git clone https://github.com/waldekkot/migrations
+cd migrations
+```
+
+### 2. Set Environment Variables
+
+```bash
+source ./setenv.sh
+```
+
+This sets up basic environment variables including SQL Server credentials:
+- **Username:** `sa`
+- **Password:** `VHOL12345!demo`
+
+### 3. Run SQL Server in Docker
+
+#### Start SQL Server 2017 Container
+
+```bash
 docker run -d \
   --platform linux/amd64 \
   --name sqlserver2017 \
@@ -56,219 +87,310 @@ docker run -d \
   -v "$(pwd)/AdventureWorks:/var/opt/mssql/backup" \
   -v sqlserver-data-2017:/var/opt/mssql \
   mcr.microsoft.com/mssql/server:2017-latest
+```
 
-# you can also use other SQL Server images
-# mcr.microsoft.com/mssql/server:2022-latest
-# mcr.microsoft.com/mssql/server:2019-latest
-# mcr.microsoft.com/mssql/server:2017-latest
+<details>
+<summary>Alternative SQL Server versions</summary>
 
-# test connectivity
+```bash
+# SQL Server 2022
+mcr.microsoft.com/mssql/server:2022-latest
+
+# SQL Server 2019
+mcr.microsoft.com/mssql/server:2019-latest
+```
+
+</details>
+
+#### Test Connectivity
+
+```bash
 sqlcmd -S 127.0.0.1,1433 -U sa -P "$ADMIN_PASS" -C -Q "SELECT name FROM sys.databases"
+```
 
-3. use VS Code
-  a. open the repo from command line: code .
-  b. install (if needed) the extensions: 
-    - Snowflake
-    - SQL Server
-    - Python
-    - Docker (optional)
-  c. check the VS Code settings
-    - there is UI, but sometimes the best control will give you opening the settings as JSON file
-      - for example: for Snowflake extension, you can manually set LLM models used by SnowConvert AI and SMA (preferred: claude-sonnet-4-5)
-      - example:
-          "snowflake.smaMigrationAssistant.modelPreference": [
-              "claude-sonnet-4-5"
-              // "Claude 4 Sonnet - Experimental (Improved quality over 3.7 Sonnet)"
-          ],
-          "snowflake.snowConvertMigrationAssistant.enabled": true,
-          "snowflake.snowConvertMigrationAssistant.modelPreference": [
-              "claude-sonnet-4-5"
-          ],
+### 4. Configure VS Code
 
-  d. configure connection to SQL Server using the SQL Server extension
-    - server: 127.0.0.1, port: 1433
-    - username: sa
-    - password: VHOL12345!demo (or whatever you specified in ./setenv.sh)
-    - database: master
-    - test connectivity
-  e. sample database: AdventureWorks
-    - any version will be OK (here we use AW 2017)
-    - SQL Server - AdventureWorks 2017 sample database
-      - https://github.com/microsoft/sql-server-samples/tree/master/samples/databases/adventure-works
-      - https://github.com/Microsoft/sql-server-samples/releases/tag/adventureworks
-      - already downloaded and available in: AdventureWorks directory (AdventureWorks2017.bak)
-    - to restore:
-      1. open script: restore-AdventureWorks-sample.sql
-        1. switch the script from Snowflake format to MS SQL format (VS Code status line)
-        2. enable: >: MS SQL: Toggle SQLCMD mode
-        3. run code in: restore-AdventureWorks-sample.sql
-          1. verify: show some data
-        4. refresh the list of databases (AdventureWorks2017 should be visible there)
-    - the full DDL for the AdventureWorks2017 database is in: instawdb.sql file in: AdventureWorks-oltp-install-script
+1. Open the repo from command line:
+   ```bash
+   code .
+   ```
 
-  f. verify if the sample UI ("sales dashboard", built using open source Streamlit) works for the local SQL Server db
-    - open a new terminal and navigate to the repo
-    - source ./setenv.sh (or: . ./setenv.sh)
-    - cd ui
-    - cd streamlit-sqlserver
-    - install uv (much better/faster Python package manager than pip)
-        - https://docs.astral.sh/uv/getting-started/installation/
-        - curl -LsSf https://astral.sh/uv/install.sh | sh
-        - uv --version
-    - run: uv run streamlit run app.py
-    - a browser should open
-    - the sample UI uses: Streamlit, pyodbc, 
+2. Install required extensions (if needed):
+   - Snowflake
+   - SQL Server
+   - Python
+   - Docker *(optional)*
 
-  g. configure your trial Snowflake account
-    - go to Settings -> Authentication
-    - configure: Multi-factor Authentication (e.g. Passkey)
-    - generate a new token (PAT - Programmatic Access Token)
-      - give it a name
-      - set expiration 
-      - select ACCOUNTADMIN as role for the token
-      - copy the PAT token into clipboard
-    - open Workspaces
-      - create a new SQL script (setup.sql)
-      - run (adjusting this to your preference is OK):
-            CREATE OR REPLACE NETWORK POLICY my_trial_open_policy
-            ALLOWED_IP_LIST = ('0.0.0.0/0')
-            COMMENT = 'Open access for educational trial account';
+3. Configure VS Code settings (JSON):
+   ```json
+   {
+     "snowflake.smaMigrationAssistant.modelPreference": [
+       "claude-sonnet-4-5"
+     ],
+     "snowflake.snowConvertMigrationAssistant.enabled": true,
+     "snowflake.snowConvertMigrationAssistant.modelPreference": [
+       "claude-sonnet-4-5"
+     ]
+   }
+   ```
 
-            ALTER USER WALDEK SET NETWORK_POLICY = my_trial_open_policy;
+### 5. Configure SQL Server Connection
 
-            ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'AWS_EU';
-      - recommended:
-        - changing the warehouse: COMPUTE_WH to Gen2
+Using the SQL Server extension:
 
-    h. edit your connections to Snowflake
-      - code ~/.snowflake/config.toml
-      - change the connection to your Snowflake trial account
-      - use the copied PAT token as password
-      - in VS Code, use Snowflake extension to connect to the trial Snowflake account
-        - check if listing databases, etc. works OK
+| Setting | Value |
+|---------|-------|
+| Server | `127.0.0.1` |
+| Port | `1433` |
+| Username | `sa` |
+| Password | `VHOL12345!demo` |
+| Database | `master` |
 
-    i. configure Snowflake CLI
-      - on MacOS: brew install snowflake-cli
-      - snow --version
-      - snow --help
-      - snow connection list
-      - snow object list database —format csv | xsv 
+### 6. Restore AdventureWorks Sample Database
 
-    j. install SnowConvert AI
-      - consider using Snowsight: left menu: Data Ingestion -> Migrations
-    k. install Snowpark Migration Accelerator
-      - consider using Snowsight: left menu: Data Ingestion -> Migrations
+The AdventureWorks 2017 sample database is included in the `AdventureWorks/` directory.
 
-  3. Patching the AdvenrtureWorks database
-    - at the moment some of the data types used by the sample database cannot be converted by SnowConvert AI
-    - examples: hierarchyid, geography
-    - the easiest solution is to change tables using those table
-      - convert the columns (hierarchyid/geography) to varchar (string) - using .toString() method
-    - the scripts in: _AW_modfications do that
-      - find-all-hierarchyid.sql - lists all tables which have columns of type: hierarchyid
-      - find-all-geography.sql - lists all tables which have columns of type: geography
-      - step by step example: HumanResources.Employee-hierarchyid-column.sql
-      - automated (AI-generated) conversion scripts: 
-        - Production.Document-hierarchyid-column.sql
-        - Person.Address-geography-column.sql
-    - there are backups of the original tables created (suffix: _Backup)
+**Resources:**
+- [AdventureWorks GitHub](https://github.com/microsoft/sql-server-samples/tree/master/samples/databases/adventure-works)
+- [Download Link](https://github.com/Microsoft/sql-server-samples/releases/tag/adventureworks)
 
+**Restore Steps:**
 
-  4. Use Snowconvert AI to do database (objects+data) conversions, migrations & validations
-    a. open SnowConvert AI
-    b. check the latest version (File menu)
-    c. get the Access Code (Help menu - it will come via email, very quickly)
-    d. New Project
-      - Extract Code
-        - select SQL Server as the data source
-        - paste the access code (it will be saved in SnowConvert AI tool)
-        - define connection to SQL Server - test it
-        - define connection to Snowflake - test it
-            - privide your Snowflake trial account details
-              - account: XXXX-YYYY
-              - select: PAT as the authentication method
-                - username
-                - PAT
-            - use: COMPUTE_WH as the warehouse
-            - use: SNOWFLAKE_LEARNING_DB as database (as the AdventureWorks2017 database in Snowflake does not exist yet)
-            - use: PUBLIC as schema
-            - use: ACCOUNTADMIN as role
-        - select all objects in the source (SQL Server) database (AdventureWorks2017)
-          - deselect the tables suffixed with: _Backup
-            1. HumanResources.Employee_Backup
-            2. Person.Address_Backup
-            3. Production.Document_Backup
-            4. Production.ProductDocument_Backup
-    e. do the Extraction and get the Conversion overview
-      - most important: EWIs (= issues)
-        - E: Errors
-        - W: Warnings
-        - I: Information
-      - you will need to get rid of the EWIs (using AI and/or manually)
-    f. view the reports (Word document)
-    g. view the extraction output (directories with files)
-    h. start with tables 
-      - only then: views, functions, procedures, triggers
-      - go table by table
+1. Open `restore-AdventureWorks-sample.sql`
+2. Switch the script from Snowflake format to MS SQL format (VS Code status line)
+3. Enable SQLCMD mode: `>: MS SQL: Toggle SQLCMD mode`
+4. Execute the restore script
+5. Verify by querying some data
+6. Refresh the database list — `AdventureWorks2017` should be visible
 
-  4. Deploy
-  5. Data Migration
-  6. Data Validation
-  7. UI (sales dashboard) in Snowflake
-    - in Snowsight: create a new Streamlit app
-      - in database: AdventureWorks2017, schema: PUBLIC
-    - replace the sample code with the content of: ui / streamlit_salesperson_dashboard.py
-    - Run
-    - verify the dashboard numbers in Snowflake match the numbers in the dashboard on SQL Server
-  8. continue conversion
-    a. views
-    b. functions
-    c. stored procedures
-    d. triggers (optional)
+> **Note:** The full DDL is available in `AdventureWorks-oltp-install-script/instawdb.sql`
 
-  
------------------------------------------------------------------------------------------------------------------------
-B. migrating data pipelines (here: Spark-based)
+### 7. Verify the Sample UI
 
-There are two approaches 
-1. run Spark code as-is (use: Snowpark Connect for Apache Spark)
-2. convert Spark code (PySpark data frames API) to Snowpark Python API (similarly for Scala/Java)
+Test the sales dashboard (built with Streamlit) against the local SQL Server:
 
-Here we start with Snowpark Connect for Apache Spark
+```bash
+source ./setenv.sh
+cd ui/streamlit-sqlserver
+```
 
-1. open a new terminal, go to the repo directory (migrations)
-2. . ./setenv.sh
-3. start the Spark cluster (2 workers)
-  - run: docker compose up -d
-  - there are 4 containers: Spark master + 2 Spark workers + Jupyter Notebook server:
-    - spark-master
-    - spark-worker-1
-    - spark-worker-2
-    - spark-notebook (address: 127.0.0.1, port: 8888)
-    - definitions: docker-compose.yml and Dockerfiles (Dockerfile.spark, Dockerfile.notebook)
-  - Spark version: 3.5.7 with PySpark
-4. the example data engineering pipeline is in Python: pipeline-spark / source_code / pipeline_dimcustomer.py
-  - reading a CSV file (name: customer_update.csv) into PySpark data frame
-  - performing a set of simple data frame transformations
-  - saving the resulting data frame into SQL Server table (append): AdventureWorks2017.dbo.DimCustomer
-  - moving the CSV file to directory: old_versions
-5. there is also a Jupyter notebook, which uses the dbo.DimCustomer table to calculate and display some statistics
-  - get the notebook token: docker logs spark-notebook
-6. there are helper shell scripts to simplify running the pipeline
-  a. ./cleanup.sh - deletes older (already processed files from old_versions/ directory. Also, removes old notebook executions)
-  b. ./reset_pipeline.sh - copies the template CSV file into the pipeline (from: ./reset_source directory)
-  c. ./run_pipeline.sh
-    - uses: spark-submit
-  d. ./run_pipeline_notebook.sh
+**Install uv (Python package manager):**
 
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv --version
+```
 
+**Run the dashboard:**
 
------------------------------------------------------------------------------------------------------------------------
-C. Here we demonstrate with Spark to Snowpark code conversion 
-1. using SMA (Snowpark Migration Accelerator)
-2. 
+```bash
+uv run streamlit run app.py
+```
 
+A browser window should open automatically.
 
------------------------------------------------------------------------------------------------------------------------
-THANK YOU !
-Contact: waldemar.kot@snowflake.com
+### 8. Configure Snowflake Trial Account
+
+1. Go to **Settings → Authentication**
+2. Configure **Multi-factor Authentication** (e.g., Passkey)
+3. Generate a **PAT (Programmatic Access Token)**:
+   - Give it a name
+   - Set expiration
+   - Select `ACCOUNTADMIN` as role
+   - Copy the token to clipboard
+
+4. In Snowsight Workspaces, create and run a setup script:
+
+   ```sql
+   CREATE OR REPLACE NETWORK POLICY my_trial_open_policy
+   ALLOWED_IP_LIST = ('0.0.0.0/0')
+   COMMENT = 'Open access for educational trial account';
+
+   ALTER USER WALDEK SET NETWORK_POLICY = my_trial_open_policy;
+
+   ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'AWS_EU';
+   ```
+
+   > **Recommended:** Change warehouse `COMPUTE_WH` to Gen2
+
+### 9. Configure Snowflake CLI
+
+Edit your Snowflake connections:
+
+```bash
+code ~/.snowflake/config.toml
+```
+
+Update with your trial account details and PAT token, then verify:
+
+```bash
+# Install on macOS
+brew install snowflake-cli
+
+# Verify installation
+snow --version
+snow --help
+snow connection list
+snow object list database --format csv | xsv
+```
+
+### 10. Install Migration Tools
+
+Configure via **Snowsight → Data Ingestion → Migrations**:
+
+- **SnowConvert AI**
+- **Snowpark Migration Accelerator**
+
+### 11. Patch the AdventureWorks Database
+
+Some data types (`hierarchyid`, `geography`) cannot be directly converted by SnowConvert AI. The workaround is to convert these columns to `VARCHAR` using `.toString()`.
+
+**Scripts in `_AW_modifications/`:**
+
+| Script | Purpose |
+|--------|---------|
+| `find-all-hierarchyid.sql` | Lists tables with `hierarchyid` columns |
+| `find-all-geography.sql` | Lists tables with `geography` columns |
+| `HumanResources.Employee-hierarchyid-column.sql` | Step-by-step example |
+| `Production.Document-hierarchyid-column.sql` | AI-generated conversion |
+| `Person.Address-geography-column.sql` | AI-generated conversion |
+
+> **Note:** Backups of original tables are created with `_Backup` suffix.
+
+---
+
+## Part B: Database Migration with SnowConvert AI
+
+### 1. Create New Project
+
+1. Open SnowConvert AI
+2. Check for latest version (File menu)
+3. Get Access Code (Help menu — delivered via email)
+
+### 2. Extract Code
+
+1. Select **SQL Server** as data source
+2. Paste the access code
+3. Configure connections:
+
+   **SQL Server:**
+   - Server: `127.0.0.1:1433`
+   - Username: `sa`
+   - Password: `VHOL12345!demo`
+
+   **Snowflake:**
+   - Account: `XXXX-YYYY`
+   - Authentication: PAT
+   - Warehouse: `COMPUTE_WH`
+   - Database: `SNOWFLAKE_LEARNING_DB`
+   - Schema: `PUBLIC`
+   - Role: `ACCOUNTADMIN`
+
+4. Select all objects in `AdventureWorks2017`
+5. **Deselect backup tables:**
+   - `HumanResources.Employee_Backup`
+   - `Person.Address_Backup`
+   - `Production.Document_Backup`
+   - `Production.ProductDocument_Backup`
+
+### 3. Review Conversion
+
+Review the **EWIs** (Errors, Warnings, Information):
+
+| Level | Description |
+|-------|-------------|
+| **E** | Errors — must fix |
+| **W** | Warnings — should review |
+| **I** | Information — optional |
+
+### 4. Convert and Deploy
+
+1. View reports (Word document)
+2. View extraction output (directories with files)
+3. Convert in order:
+   - Tables (start here)
+   - Views
+   - Functions
+   - Procedures
+   - Triggers
+
+### 5. Data Migration & Validation
+
+1. **Deploy** converted objects to Snowflake
+2. **Migrate Data** from SQL Server
+3. **Validate Data** integrity
+
+### 6. Verify with UI Dashboard
+
+1. In Snowsight, create a new **Streamlit app**:
+   - Database: `AdventureWorks2017`
+   - Schema: `PUBLIC`
+2. Replace sample code with content from `ui/streamlit_salesperson_dashboard.py`
+3. Run and verify numbers match SQL Server dashboard
+
+---
+
+## Part C: Pipeline Migration (Spark to Snowpark)
+
+### Two Approaches
+
+1. **Run Spark as-is** using Snowpark Connect for Apache Spark
+2. **Convert Spark to Snowpark** using Snowpark Migration Accelerator (SMA)
+
+### Approach 1: Snowpark Connect for Apache Spark
+
+#### Start Spark Cluster
+
+```bash
+source ./setenv.sh
+cd pipeline-spark
+docker compose up -d
+```
+
+**Containers started:**
+
+| Container | Description |
+|-----------|-------------|
+| `spark-master` | Spark master node |
+| `spark-worker-1` | Spark worker 1 |
+| `spark-worker-2` | Spark worker 2 |
+| `spark-notebook` | Jupyter Notebook (`127.0.0.1:8888`) |
+
+> Configuration files: `docker-compose.yml`, `Dockerfile.spark`, `Dockerfile.notebook`
+> Spark version: **3.5.7** with PySpark
+
+#### Pipeline Overview
+
+**Source:** `pipeline-spark/source_code/pipeline_dimcustomer.py`
+
+The pipeline:
+1. Reads `customer_update.csv` into PySpark DataFrame
+2. Performs data transformations
+3. Appends results to `AdventureWorks2017.dbo.DimCustomer`
+4. Archives CSV to `old_versions/`
+
+**Jupyter Notebook:** Uses `dbo.DimCustomer` for statistics and visualizations.
+
+```bash
+# Get notebook token
+docker logs spark-notebook
+```
+
+#### Helper Scripts
+
+| Script | Description |
+|--------|-------------|
+| `./cleanup.sh` | Deletes processed files from `old_versions/` and old notebook executions |
+| `./reset_pipeline.sh` | Copies template CSV from `./reset_source/` |
+| `./run_pipeline.sh` | Runs pipeline via `spark-submit` |
+| `./run_pipeline_notebook.sh` | Runs Jupyter notebook |
+
+### Approach 2: Spark to Snowpark Conversion with SMA
+
+Use **Snowpark Migration Accelerator (SMA)** to convert PySpark DataFrame API code to Snowpark Python API.
+
+---
+
+## Thank You!
+
+**Contact:** [waldemar.kot@snowflake.com](mailto:waldemar.kot@snowflake.com)
