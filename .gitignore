@@ -101,7 +101,7 @@ ehthumbs.db
 Desktop.ini
 
 # Credentials (be careful not to commit these)
-*credentials*.txt
+# *credentials*.txt
 *secrets*.txt
 *.pem
 *.key
