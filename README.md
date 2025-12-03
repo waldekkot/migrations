@@ -339,6 +339,10 @@ Review the **EWIs** (Errors, Warnings, Information):
 
 ### Approach 1: Snowpark Connect for Apache Spark
 
+Recommended as the least intrusive (effectively, just repoint your Spark-based pipelines to Snowflake). Works for Python Spark (PySpark) and Scala/Java Spark. The data frames transformations are the same between Spark and Snowpark Connect (do not confuse Snowpark Connect and Snowpark APIs).
+Once you have your existing Spark-based pipelines running on Snowflake, then you can gradually optimize them by using Snowpark APIs (which also allows you to use Snowflake native functionality, like stored procedures, dynamic tables, Cortex AI and many more - which do not exist in Spark APIs).
+You can easily use both Snowpark Connect (i.e. Spark) sessions and Snowpark sessions (at the simplest level, you can use spark.sql for either Spark SQL queries and/or Snowflake SQL queries).
+
 #### Start Spark Cluster
 
 ```bash
@@ -384,6 +388,7 @@ docker logs spark-notebook
 | `./reset_pipeline.sh` | Copies template CSV from `./reset_source/` |
 | `./run_pipeline.sh` | Runs pipeline via `spark-submit` |
 | `./run_pipeline_notebook.sh` | Runs Jupyter notebook |
+
 
 ### Approach 2: Spark to Snowpark Conversion with SMA
 
