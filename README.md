@@ -258,6 +258,7 @@ Here we start with Snowpark Connect for Apache Spark
   a. ./cleanup.sh - deletes older (already processed files from old_versions/ directory. Also, removes old notebook executions)
   b. ./reset_pipeline.sh - copies the template CSV file into the pipeline (from: ./reset_source directory)
   c. ./run_pipeline.sh
+    - uses: spark-submit
   d. ./run_pipeline_notebook.sh
 
 

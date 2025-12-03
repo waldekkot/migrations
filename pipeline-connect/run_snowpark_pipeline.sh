@@ -35,23 +35,26 @@ Examples:
 Prerequisites:
   - Python 3.12 virtual environment (.venv) with snowpark-submit installed
   - AdventureWorks2017 database and schemas (run ./setup_snowflake.sh first)
-  - SPARK_POOL compute pool configured
   - @csv_stage created in PUBLIC schema
   - reset_source/customer_update.csv file exists
+  - Snowflake connection configured in ~/.snowflake/config.toml
 
 Pipeline Steps:
-  1. Upload customer_update.csv to @csv_stage
-  2. Submit PySpark job to Snowpark Connect
-  3. Transform data (name splitting, uppercase, gender mapping)
-  4. Write to dbo.DIMCUSTOMER table
-  5. Archive processed CSV to @csv_stage/old_versions/
+  1. Ensure 'spark-connect' connection exists (auto-created from specified connection)
+  2. Upload customer_update.csv to @csv_stage
+  3. Submit PySpark job via Snowpark Connect
+  4. Transform data (name splitting, uppercase, gender mapping)
+  5. Write to dbo.DIMCUSTOMER table
+  6. Archive processed CSV to @csv_stage/old_versions/
 
 Configuration:
   Database:      AdventureWorks2017
   Schema:        PUBLIC (for stage)
   Target Schema: dbo (for DIMCUSTOMER table)
   Warehouse:     COMPUTE_WH
-  Compute Pool:  SPARK_POOL
+
+Note: The Snowpark Connect library requires a connection named 'spark-connect'.
+      This script automatically creates it by copying from your specified connection.
 
 Output:
   - Pipeline execution logs
@@ -77,7 +80,6 @@ source lib/snowflake_connection.sh
 SNOWFLAKE_DATABASE="AdventureWorks2017"
 SNOWFLAKE_SCHEMA="PUBLIC"
 SNOWFLAKE_WAREHOUSE="COMPUTE_WH"
-SNOWFLAKE_COMPUTE_POOL="SPARK_POOL"
 
 echo "=========================================="
 echo "Running DimCustomer Pipeline on Snowflake"
@@ -93,6 +95,12 @@ fi
 
 # Display connection info
 display_connection_info
+
+# Ensure spark-connect connection exists (required by snowpark-connect library)
+if ! ensure_spark_connect_connection; then
+    echo "❌ Failed to setup spark-connect connection"
+    exit 1
+fi
 
 echo "Database: ${SNOWFLAKE_DATABASE}"
 echo "Schema: ${SNOWFLAKE_SCHEMA}"
@@ -116,12 +124,11 @@ echo "Using snowpark-submit version:"
 snowpark-submit --version
 echo ""
 
-# Set the workload name with timestamp
+# Set the app name with timestamp
 WORKLOAD_NAME="DIMCUSTOMER_PIPELINE_$(date +%Y%m%d_%H%M%S)"
 
-echo "Workload name: ${WORKLOAD_NAME}"
+echo "App name: ${WORKLOAD_NAME}"
 echo "Warehouse: ${SNOWFLAKE_WAREHOUSE}"
-echo "Compute Pool: ${SNOWFLAKE_COMPUTE_POOL}"
 echo ""
 
 # Step 1: Upload the CSV file to Snowflake stage
@@ -149,25 +156,31 @@ echo ""
 
 # Step 2: Submit the pipeline to Snowflake
 # The CSV file was uploaded to @csv_stage in Step 1
-echo "Step 2: Submitting pipeline to Snowflake..."
-echo "Note: Pandas is available by default via Anaconda integration"
+echo "Step 2: Submitting pipeline via Snowpark Connect..."
+echo "Note: Using local snowpark-submit with Snowpark Connect library"
 echo ""
 
-# Submit using the effective connection name
+# Set environment variables for Snowpark Connect session
+# These are used by the snowpark-connect library to configure the session
+export SNOWFLAKE_DATABASE="${SNOWFLAKE_DATABASE}"
+export SNOWFLAKE_SCHEMA="${SNOWFLAKE_SCHEMA}"
+export SNOWFLAKE_WAREHOUSE="${SNOWFLAKE_WAREHOUSE}"
+
+# Copy py-files to the working directory so they're accessible
+cp source_code/spark_configs.txt . 2>/dev/null || true
+cp source_code/sql_server_credentials.txt . 2>/dev/null || true
+
+# Submit using local snowpark-submit
+# Filter out verbose snowflake_connect_server logs for cleaner output
 snowpark-submit \
-  --snowflake-connection-name "${EFFECTIVE_CONNECTION}" \
-  --snowflake-workload-name "${WORKLOAD_NAME}" \
-  --database "${SNOWFLAKE_DATABASE}" \
-  --schema "${SNOWFLAKE_SCHEMA}" \
-  --warehouse "${SNOWFLAKE_WAREHOUSE}" \
-  --compute-pool "${SNOWFLAKE_COMPUTE_POOL}" \
-  --snowflake-stage @csv_stage \
-  --py-files source_code/spark_configs.txt,source_code/sql_server_credentials.txt \
-  --wait-for-completion \
-  --display-logs \
-  --snowflake-log-level INFO \
-  --comment "Daily DimCustomer data pipeline from POS system with Snowflake Pandas" \
-  source_code/pipeline_dimcustomer_snowflake.py
+  --name "${WORKLOAD_NAME}" \
+  --py-files spark_configs.txt,sql_server_credentials.txt \
+  source_code/pipeline_dimcustomer_snowflake.py 2>&1 | \
+  grep -v "snowflake_connect_server - INFO" | \
+  grep -v "Failed to initialize Upload Scala UDF Jars"
+
+# Cleanup copied files
+rm -f spark_configs.txt sql_server_credentials.txt 2>/dev/null || true
 
 # Check the exit code
 EXIT_CODE=$?

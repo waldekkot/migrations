@@ -205,7 +205,7 @@ if [ -z "$pool_exists" ]; then
         MAX_NODES = 2
         INSTANCE_FAMILY = CPU_X64_XS
         AUTO_RESUME = TRUE
-        INITIALLY_SUSPENDED = TRUE
+        INITIALLY_SUSPENDED = FALSE
         COMMENT = 'Compute pool for Snowpark Connect Apache Spark workloads';"
     
     if [ -n "${SNOWFLAKE_CONNECTION}" ]; then

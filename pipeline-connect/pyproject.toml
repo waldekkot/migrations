@@ -1,0 +1,15 @@
+[project]
+name = "pipeline-connect"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.7",
+    "opentelemetry-exporter-otlp==1.26.0",
+    "pandas>=2.3.3",
+    "pyspark==3.5.7",
+    "snowflake-telemetry-python>=0.7.1",
+    "snowpark-connect>=1.4.0",
+    "snowpark-submit>=1.4.0",
+]
