@@ -236,6 +236,31 @@ There are two approaches
 
 Here we start with Snowpark Connect for Apache Spark
 
+1. open a new terminal, go to the repo directory (migrations)
+2. . ./setenv.sh
+3. start the Spark cluster (2 workers)
+  - run: docker compose up -d
+  - there are 4 containers: Spark master + 2 Spark workers + Jupyter Notebook server:
+    - spark-master
+    - spark-worker-1
+    - spark-worker-2
+    - spark-notebook (address: 127.0.0.1, port: 8888)
+    - definitions: docker-compose.yml and Dockerfiles (Dockerfile.spark, Dockerfile.notebook)
+  - Spark version: 3.5.7 with PySpark
+4. the example data engineering pipeline is in Python: pipeline-spark / source_code / pipeline_dimcustomer.py
+  - reading a CSV file (name: customer_update.csv) into PySpark data frame
+  - performing a set of simple data frame transformations
+  - saving the resulting data frame into SQL Server table (append): AdventureWorks2017.dbo.DimCustomer
+  - moving the CSV file to directory: old_versions
+5. there is also a Jupyter notebook, which uses the dbo.DimCustomer table to calculate and display some statistics
+  - get the notebook token: docker logs spark-notebook
+6. there are helper shell scripts to simplify running the pipeline
+  a. ./cleanup.sh - deletes older (already processed files from old_versions/ directory. Also, removes old notebook executions)
+  b. ./reset_pipeline.sh - copies the template CSV file into the pipeline (from: ./reset_source directory)
+  c. ./run_pipeline.sh
+  d. ./run_pipeline_notebook.sh
+
+
 -----------------------------------------------------------------------------------------------------------------------
 C. Here we demonstrate with Spark to Snowpark code conversion 
 1. using SMA (Snowpark Migration Accelerator)
